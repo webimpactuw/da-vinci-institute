@@ -1,8 +1,8 @@
 #Mahika Bagri
 #January 27 2026
 
-from sqlalchemy import Column, Integer, String, Boolean, Date, ForeignKey, Sequence, create_engine
-from sqlalchemy.orm import sessionmaker, relationship, declarative_base
+from sqlalchemy import Column, Integer, String, Boolean, Sequence, create_engine
+from sqlalchemy.orm import sessionmaker, declarative_base
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
