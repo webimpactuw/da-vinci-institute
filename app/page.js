@@ -16,7 +16,6 @@ export default function Home() {
           </p>
           
         </div>
-        <Navbar />
       </main>
     </div>
   );
