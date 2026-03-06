@@ -1,5 +1,5 @@
 #Mahika Bagri
-#February 17 2026
+#March 5 2026
 
 from datetime import date, timedelta, datetime
 from sqlalchemy import Column, Integer, String, Boolean, Sequence, create_engine
@@ -12,9 +12,17 @@ from passlib.hash import argon2
 from passlib.context import CryptContext
 from jose import jwt, JWTError
 from typing import Optional
-from something import SECRET_KEY, ALGORITHM, TOKEN_EXPIRES
+import string 
+import os
+from dotenv import load_dotenv
 
-engine = create_engine('sqlite:///orm.db')
+load_dotenv()
+SECRET_KEY = os.getenv("SECRET_KEY")
+ALGORITHM = os.getenv("ALGORITHM", "HS256")
+TOKEN_EXPIRES = int(os.getenv("TOKEN_EXPIRES", 3600))
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -73,7 +81,6 @@ class User(Base):
     id = Column(Integer, Sequence('user_id_sequence'), primary_key = True)
     username = Column(String(50), nullable = False)
     password = Column(String(20), nullable = False)
-    professor = Column(Boolean)
 
     @classmethod
     def check_input(cls, db, username, password):
@@ -83,16 +90,20 @@ class User(Base):
             raise ValueError("The password cannot be empty.")
         if(db.query(User).filter(User.username == username).exists()):
             raise ValueError("Username taken; Please try another.")
-        if(password.contains('\'') or password.contains('\"') or 
-           password.contains(';') or password.contains('--') or
-           password.contains('*') or password.contains('\\') or 
-           password.contains('/') or password.contains('=') or 
-           password.contains('<') or password.contains('>')):
-            raise ValueError("Password cannot contain \', \", ;, --, *, \\, /, =, <, >")
+        if len(password) < 8:
+            raise ValueError("The password cannot be shorter than 8 characters.")    
+        if not any(character.isupper() for character in password):
+            raise ValueError("The password must contain an uppercase letter.")    
+        if not any(character.islower() for character in password):
+            raise ValueError("The password must contain a lowercase letter.")    
+        if not any(character.isdigit() for character in password):
+            raise ValueError("The password must contain a digit.")    
+        if not any(c in string.punctuation for c in password):
+            raise ValueError("The password must contain a special character.")    
         
         @classmethod
-        def add(cls, db, username, password, professor):
-            db.add(User(username, password, professor))
+        def add(cls, db, username, password):
+            db.add(User(username, password))
             db.commit()
 
         @classmethod
@@ -106,7 +117,6 @@ class User(Base):
 class UserPy(BaseModel):
     username: str
     password: str
-    professor: bool
 
 def get_user(token:str = Depends(scheme), db: Session = Depends(get_db)):
     token_data = verify_token(token) 
