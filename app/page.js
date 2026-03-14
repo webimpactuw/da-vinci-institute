@@ -1,20 +1,165 @@
-import Footer from "@/components/ui/Footer";
+import Image from "next/image";
+import Link from "next/link";
+import FAQItem from "@/components/ui/Faqitem";
 
-export default function Home() {
+/* ── Course data ── */
+const courses = [
+  { id: 1, label: "Writing",    icon: "✏️" },
+  { id: 2, label: "Statistics", icon: "📊" },
+  { id: 3, label: "Biology",    icon: "🌱" },
+  { id: 4, label: "Music",      icon: "🎵" },
+  { id: 5, label: "Math",       icon: "📐" },
+];
+
+/* ── FAQ data ── */
+const faqs = [
+  {
+    q: "Education For All?",
+    a: "Da Vinci Institute believes every student deserves access to a world-class education, regardless of background or circumstance.",
+  },
+  {
+    q: "Unlimited Learning?",
+    a: "Our curriculum is designed to grow with each student, offering unlimited pathways to explore curiosity and build mastery.",
+  },
+];
+
+/* ── Beliefs ── */
+const beliefs = [
+  "Education is the most reliable investment for mankind's quest for progress and success.",
+  "Knowledge is the greatest form of currency for the individual.",
+  "Each individual is born with an inherent gift; the purpose of education is to identify this gift and to help the individual cultivate it to their maximum potential.",
+  "Every individual should have the right to education and equal chances of success; there shall be neither divisions nor discrimination regarding access to resources.",
+  "The individual has a responsibility to use their abilities for the general advancement of mankind.",
+];
+
+export default function HomePage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <div className="flex items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            Blank Home Page
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            This is a blank home page
-          </p>
-          
+    <main className="bg-white text-gray-800" style={{ fontFamily: "'Lato', sans-serif" }}>
+
+      {/* ── HERO ── */}
+      <section className="relative h-[420px] flex items-end justify-center overflow-hidden">
+        <Image
+          src="/placeholder.png"
+          alt="Da Vinci Institute building"
+          fill
+          className="object-cover object-top"
+          priority
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/20 to-black/55" />
+        <h1
+          className="relative z-10 text-white text-5xl md:text-6xl font-light tracking-[0.2em] mb-10 drop-shadow-lg"
+          style={{ fontFamily: "'Cinzel', serif" }}
+        >
+          Da Vinci Institute
+        </h1>
+      </section>
+
+      {/* ── ABOUT US ── */}
+      <section className="max-w-4xl mx-auto px-6 py-16">
+        <h2
+          className="text-center text-3xl font-light tracking-widest mb-10 text-gray-800"
+          style={{ fontFamily: "'Cinzel', serif" }}
+        >
+          About Us
+        </h2>
+
+        {/* Our Mission */}
+        <div className="flex flex-col md:flex-row gap-8 mb-14">
+          <div className="md:w-2/5 flex-shrink-0">
+            <Image
+              src="/placeholder.png"
+              alt="Graduation"
+              width={380}
+              height={260}
+              className="rounded-lg object-cover w-full"
+            />
+          </div>
+          <div className="md:w-3/5">
+            <h3
+              className="text-lg font-semibold mb-3 text-gray-800"
+              style={{ fontFamily: "'Cinzel', serif" }}
+            >
+              Our Mission
+            </h3>
+            <p className="text-sm text-gray-600 leading-relaxed">
+              Da Vinci Institute seeks to provide personalized education to students all around
+              the world who have different learning methods and needs that are not satisfied by
+              the public education system. We strive to recognize the potential in each student
+              and help them cultivate their talents to make a lasting positive impact on society.
+              Through our lessons, we not only hope to educate students, but to help them find
+              joy in learning and understanding which will allow them to be true scholars and
+              learners in our society.
+            </p>
+          </div>
         </div>
-      </main>
-    </div>
+
+        {/* Our Beliefs */}
+        <h3
+          className="text-xl font-semibold text-center mb-6 text-gray-800"
+          style={{ fontFamily: "'Cinzel', serif" }}
+        >
+          Our Beliefs
+        </h3>
+        <div className="space-y-3 text-sm text-gray-600 text-center max-w-2xl mx-auto">
+          {beliefs.map((b, i) => (
+            <p key={i} className="leading-relaxed">{b}</p>
+          ))}
+        </div>
+      </section>
+
+      {/* ── COURSES WE OFFER ── */}
+      <section className="px-6 pb-16 max-w-4xl mx-auto">
+        <h2
+          className="text-xl font-light tracking-widest mb-6 text-gray-800"
+          style={{ fontFamily: "'Cinzel', serif" }}
+        >
+          Courses We Offer
+        </h2>
+        <div className="flex gap-5 overflow-x-auto pb-2 scrollbar-hide">
+          {courses.map((c) => (
+            <div key={c.id} className="flex-shrink-0 flex flex-col items-center gap-2">
+              <Link
+                href="/courses"
+                className="w-[100px] h-[100px] bg-[#4a7c59] rounded-lg flex items-center justify-center text-4xl hover:bg-[#3d6b4a] transition-colors"
+              >
+                {c.icon}
+              </Link>
+              <span className="text-xs text-gray-600">{c.label}</span>
+            </div>
+          ))}
+          <div className="flex-shrink-0 flex flex-col items-center gap-2">
+            <Link
+              href="/courses"
+              className="w-[100px] h-[100px] bg-[#4a7c59] rounded-lg flex items-center justify-center text-white text-2xl hover:bg-[#3d6b4a] transition-colors"
+            >
+              →
+            </Link>
+            <span className="text-xs text-gray-600">More</span>
+          </div>
+        </div>
+        {/* Pagination dots */}
+        <div className="flex gap-1.5 justify-center mt-5">
+          <span className="w-2 h-2 rounded-full bg-gray-500 inline-block" />
+          <span className="w-2 h-2 rounded-full bg-gray-300 inline-block" />
+          <span className="w-2 h-2 rounded-full bg-gray-300 inline-block" />
+        </div>
+      </section>
+
+      {/* ── FAQ ── */}
+      <section className="bg-[#003d55] py-16 px-6">
+        <h2
+          className="text-center text-3xl font-light tracking-widest text-white mb-10"
+          style={{ fontFamily: "'Cinzel', serif" }}
+        >
+          Frequently Asked Questions
+        </h2>
+        <div className="max-w-xl mx-auto space-y-3">
+          {faqs.map((faq, i) => (
+            <FAQItem key={i} question={faq.q} answer={faq.a} />
+          ))}
+        </div>
+      </section>
+
+    </main>
   );
 }
