@@ -14,6 +14,7 @@ Error Throwing implemented Differently from HiFi
 
 "use client";
 
+import InputField from "@/components/InputField";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -23,6 +24,9 @@ export default function Page(){
 
     const handleSignUp = async (e) => {
         e.preventDefault()
+        if(!checkPassword()){
+            return;
+        }
 
         try{
             const res = await fetch(`${API_URL}/user`, {
@@ -39,17 +43,33 @@ export default function Page(){
             const data = await res.json();
 
             if (!res.ok) {
-                setError(data.detail||"Something went wrong");
-            return;
+                setErrors(data.detail||"Something went wrong");
+                return;
             }
-            setError("");
-            Username("");
-            Password("");
-            PasswordVerify("");
+            setErrors([]);
+            setUsername("");
+            setPassword("");
+            setPasswordVerify("");
         } catch (errors) {
-            setError("Servers Unreachable. Try again later.")
+            setErrors(...errors, ["Servers Unreachable. Try again later."])
         }
     };
+
+    const checkPassword = () => {
+        if(password !== passwordVerify){
+            setErrors(...errors, "Passwords do not match");
+            return false;
+        }
+        if(password.length < 8){
+            setErrors(...errors, "Password must be at least 8 characters long");
+            return false;
+        }
+        if(!/\d/.test(password)){
+            setErrors(...errors, "Password must contain at least one number");
+            return false;
+        }
+        return true;
+      }
 
     const handleLogIn = async (e) => {
         e.preventDefault()
@@ -68,145 +88,117 @@ export default function Page(){
             const data = await res.json();
 
             if (!res.ok) {
-                setError(data.detail||"Something went wrong");
-            return;
+                setErrors(data.detail||"Something went wrong");
+                return;
             }
 
             localStorage.setItem("token", data.access_token);
             /*router.push("_");*/
-            setError("");
-            Username("");
-            Password("");
+            setErrors([]);
+            setUsername("");
+            setPassword("");
         } catch (errors) {
-            setError("Servers Unreachable. Try again later.")
+            setErrors(...errors, ["Servers Unreachable. Try again later."])
         }
 
     };
 
-    const [username, Username] = useState("");
-    const [password, Password] = useState("");
-    const [passwordVerify, PasswordVerify] = useState("");
-    const [error, setError] = useState("");
+    const [username, setUsername] = useState("");
+    const [password, setPassword] = useState("");
+    const [passwordVerify, setPasswordVerify] = useState("");
+    const [errors, setErrors] = useState([]);
     const [isLogin, setIsLogin] = useState(false)
 
-        return(
-        <main
-            style={{
-                /*
-                backgroundImage: "url('/_.png')",
-                backgroundSize: "fill",
-                backgroundPosition: "center",
-                */
-            }}
-        >
+    const toggleForm = () => {
+        setIsLogin(!isLogin);
+        setErrors([]);
+    }
+
+    return(
+        <main>
             { isLogin && (
-                <div style=/*{{ padding: _, maxWidth: "_px", margin: "_" }}*/>
-                    <header>
-                        <h1>Welcome Back!</h1>
-                        <h6>Login to Your Account</h6>
-                    </header>
-                    <h5>Username</h5>
-                    <input
-                        type="text"
-                        placeholder="Username"
-                        value={username}
-                        onChange={(e) => Username(e.target.value)}
-                        /* className = "_" */
-                        required
+                <div className="h-full">
+                  <form className="flex flex-col justify-center items-center gap-6 w-1/4 p-4 pt-20 pb-20 rounded-4xl bg-[#eaf3fa] text-[#000105] fixed top-[150px] right-[calc(20%)]">
+                    <h1 className="text-3xl font-semibold mb-3">Welcome Back!</h1>
+                    <p>Login to your account</p>
+
+                    <InputField
+                      label="Username"
+                      type="text"
+                      id="username"
+                      name="username"
+                      placeholder="Username"
+                      onChange={(e) => setUsername(e.target.value)}
+                      value={username}
                     />
-                    <h5>Password</h5>
-                    <input
-                    style={{ 
-                        /* marginTop: "_px",*/
-                    }}   
-                        type="password"
-                        placeholder="Password"
-                        value={password}
-                        onChange={(e) => Password(e.target.value)}
-                        /* className = "_" */
-                        required
+
+                    <InputField
+                      label="Password"
+                      type="password"
+                      id="password"
+                      name="password"
+                      placeholder="Password"
+                      onChange={(e) => setPassword(e.target.value)}
+                      value={password}
                     />
-                    <button 
-                        /* className = "_" */
-                        onClick={handleLogIn}>
-                            <div className = "Tagline">
-                                Log In
-                            </div>
-                    </button>
-                    <p>Don't have an account?</p>
-                    <span
-                        onClick = {() => {
-                            setIsLogin(isLogin => !isLogin)
-                        }}
-                        style={{ color: "green", cursor: "pointer" }}
-                        >
-                        Sign Up
-                    </span>
+
+                    <button className="bg-[#387333] rounded-4xl p-2 w-1/2 text-white mt-7" type="submit" onClick={handleLogIn}>Login</button>
+                    <p>Don&apos;t have an account? <button className="text-[#387333] font-semibold" onClick={toggleForm}> Sign up</button>
+                    </p>
+                  </form>
                 </div>
             )}
             { !isLogin && (
-                <div style=/*{{ padding: _, maxWidth: "_px", margin: "_" }}*/>
-                    <header>
-                        <h1>Create an Account</h1>
-                    </header>
-                    <h5>Username</h5>
-                    <input
-                        type="text"
-                        placeholder="Username"
-                        value={username}
-                        onChange={(e) => Username(e.target.value)}
-                        /* className = "_" */
-                        required
+                <div className="h-full">
+                  <form className="flex flex-col justify-center items-center gap-6 w-1/4 p-4 pt-20 pb-20 rounded-4xl bg-[#eaf3fa] text-[#000105] fixed top-[150px] right-[calc(20%)]">
+                    <h1 className="text-3xl font-semibold mb-3">Create an Account</h1>
+
+                    <InputField
+                      label="Username"
+                      type="text"
+                      id="username"
+                      name="username"
+                      placeholder="Username"
+                      onChange={(e) => setUsername(e.target.value)}
+                      value={username}
                     />
-                    <h5>Choose a Password</h5>
-                    <input
-                    style={{ 
-                        /* marginTop: "_px",*/
-                    }}   
-                        type="password"
-                        placeholder="Password"
-                        value={password}
-                        onChange={(e) => Password(e.target.value)}
-                        /* className = "_" */
-                        required
+
+                    <InputField
+                      label="Password"
+                      type="password"
+                      id="password"
+                      name="password"
+                      placeholder="Password"
+                      onChange={(e) => setPassword(e.target.value)}
+                      value={password}
                     />
-                    <h5>Verrify Password</h5>
-                    <input
-                    style={{ 
-                        /* marginTop: "_px",*/
-                    }}   
-                        type="password"
-                        placeholder="Password"
-                        value={passwordVerify}
-                        onChange={(e) => PasswordVerify(e.target.value)}
-                        /* className = "_" */
-                        required
+
+                    <InputField
+                      label="Confirm Password"
+                      type="password"
+                      id="confirm"
+                      name="confirm"
+                      placeholder="Confirm Password"
+                      onChange={(e) => setPasswordVerify(e.target.value)}
+                      value={passwordVerify}
                     />
-                    <button 
-                        style={{
-                            opacity: password !== passwordVerify? .5:1
-                        }}
-                        disabled={password !== passwordVerify}
-                        /* className = "_" */
-                        onClick={handleSignUp}>
-                            <div className = "Tagline">
-                                Sign Up
-                            </div>
-                    </button>
-                    <p>Already have an account?</p>
-                    <span
-                        onClick = {() => {
-                            setIsLogin(isLogin => !isLogin)
-                        }}
-                        style={{ color: "green", cursor: "pointer" }}
-                        >
-                        Login
-                    </span>
+
+                    <button className="bg-[#387333] rounded-4xl p-2 w-1/2 text-white mt-7" type="submit" onClick={handleSignUp}>Sign Up</button>
+                    <p>Already have an account? <button className="text-[#387333] font-semibold" onClick={toggleForm}> Log In</button>
+                    </p>
+                  </form>
                 </div>
                 )}
-            {error && (
-                <div /* className = "_" */>
-                    {error}
+            {errors && (
+                <div>
+                    <ul>
+                        {errors.map((error, index) => (
+                            <li key={index} className="text-red-500">
+                                {error}
+                            </li>
+                        ))}
+                    </ul>
+                    
                 </div>
             )}
         </main>
