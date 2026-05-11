@@ -36,10 +36,10 @@ export default function HomePage() {
   return (
     <main className="bg-white text-gray-800" style={{ fontFamily: "'Lato', sans-serif" }}>
 
-      {/* ── HERO ── */}
+      {/* ── hero ── */}
       <section className="relative h-[420px] flex items-end justify-center overflow-hidden">
         <Image
-          src="/placeholder.png"
+          src="/homeBackground.png"
           alt="Da Vinci Institute building"
           fill
           className="object-cover object-top"
@@ -54,7 +54,7 @@ export default function HomePage() {
         </h1>
       </section>
 
-      {/* ── ABOUT US ── */}
+      {/* ── About Us ── */}
       <section className="max-w-4xl mx-auto px-6 py-16">
         <h2
           className="text-center text-3xl font-light tracking-widest mb-10 text-gray-800"
@@ -67,7 +67,7 @@ export default function HomePage() {
         <div className="flex flex-col md:flex-row gap-8 mb-14">
           <div className="md:w-2/5 flex-shrink-0">
             <Image
-              src="/placeholder.png"
+              src="/grad.png"
               alt="Graduation"
               width={380}
               height={260}
@@ -107,7 +107,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── COURSES WE OFFER ── */}
+      {/* ── Courses We Offer ── */}
       <section className="px-6 pb-16 max-w-4xl mx-auto">
         <h2
           className="text-xl font-light tracking-widest mb-6 text-gray-800"
@@ -137,7 +137,6 @@ export default function HomePage() {
             <span className="text-xs text-gray-600">More</span>
           </div>
         </div>
-        {/* Pagination dots */}
         <div className="flex gap-1.5 justify-center mt-5">
           <span className="w-2 h-2 rounded-full bg-gray-500 inline-block" />
           <span className="w-2 h-2 rounded-full bg-gray-300 inline-block" />
