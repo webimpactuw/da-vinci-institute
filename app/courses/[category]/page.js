@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { courseData } from "@/lib/courseData";
 import { client } from "@/sanity/lib/client";
 
-function CourseCard({ id, course, category }) {
+function CourseCard({ category, course }) {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
       {/* Thumbnail */}
@@ -17,7 +17,7 @@ function CourseCard({ id, course, category }) {
 
       {/* Body */}
       <div className="p-3 flex flex-col flex-1 gap-1">
-        <p className="text-sm font-semibold text-gray-800 leading-tight">{course.name}</p>
+        <p className="text-sm font-semibold text-gray-800 leading-tight">{course.title}</p>
         <p className="text-xs text-gray-500 leading-relaxed flex-1">{course.description}</p>
 
         {/* Progress bar */}
@@ -34,10 +34,11 @@ function CourseCard({ id, course, category }) {
 
         {/* CTA — links to the course page */}
         <Link
-          href={`/courses/${category}/${id}`}
+          href={`/courses/${category}/${course.slug.current}`}
           className="mt-2 self-end text-xs font-bold rounded-full px-4 py-1.5 bg-[#4a7c59] text-white hover:bg-[#3d6b4a] transition-colors"
         >
-          {course.status === "resume" ? "Resume" : "Begin"}
+          {/* {course.status === "resume" ? "Resume" : "Begin"} */}
+          Begin
         </Link>
       </div>
     </div>
@@ -46,13 +47,11 @@ function CourseCard({ id, course, category }) {
 
 export default async function CourseListPage({ params }) {
   const { category } = await params;
-  const categoryEntry = courseData[category];
 
-  if (!categoryEntry) {
-    redirect("/courses");
-  }
-
-  const courseEntries = Object.entries(categoryEntry.courses);
+  const query = `*[_type == "course" && subject->slug.current == $category]{ _id, title, description, slug, subject-> { subjectName, slug } }`;
+  const queryParams = { category: category };
+  const courseEntries = await client.fetch(query, queryParams);
+  console.log(courseEntries);
 
   return (
     <main className="min-h-screen bg-white px-6 py-10" style={{ fontFamily: "'Lato', sans-serif" }}>
@@ -75,13 +74,13 @@ export default async function CourseListPage({ params }) {
         className="text-xl font-bold text-gray-800 mb-6"
         style={{ fontFamily: "'Cinzel', serif" }}
       >
-        {categoryEntry.label} Courses
+        {category} Courses
       </h1>
 
       {/* Course grid — 3 columns */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-6xl">
-        {courseEntries.map(([id, course]) => (
-          <CourseCard key={id} id={id} course={course} category={category} />
+        {courseEntries.map((course) => (
+          <CourseCard key={course._id} category={category} course={course} />
         ))}
       </div>
 

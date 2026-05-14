@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { PortableText } from "next-sanity";
 
 // Shared: progress bar + bookmark footer
 function CardFooter({ progress = 0 }) {
@@ -23,22 +24,18 @@ function CardFooter({ progress = 0 }) {
 }
 
 // text card - Heading + subheading + one or more text blocks
-export function TextCard({ heading, subheading, blocks = [], progress = 0 }) {
+export function TextCard({ title, subtitle, text = [], progress = 0 }) {
   return (
     <div className="bg-[#e8edf2] rounded-2xl p-6 flex flex-col gap-4">
       <div className="text-center">
         <h2 className="font-semibold text-gray-800 text-base" style={{ fontFamily: "'Cinzel', serif" }}>
-          {heading}
+          {title}
         </h2>
-        {subheading && (
-          <p className="text-xs text-gray-500 mt-0.5">{subheading}</p>
+        {subtitle && (
+          <p className="text-xs text-gray-500 mt-0.5">{subtitle}</p>
         )}
       </div>
-      {blocks.map((text, i) => (
-        <p key={i} className="text-sm text-gray-600 leading-relaxed"
-          dangerouslySetInnerHTML={{ __html: text }}
-        />
-      ))}
+      <PortableText value={text} className="text-sm text-gray-600 leading-relaxed" />
       <CardFooter progress={progress} />
     </div>
   );
@@ -77,6 +74,7 @@ export function VideoCard({ title, videoUrl, progress = 0 }) {
 
 // image card - Title + image
 export function ImageCard({ title, imageSrc, imageAlt = "", progress = 0 }) {
+  console.log(imageSrc);
   return (
     <div className="bg-[#e8edf2] rounded-2xl p-6 flex flex-col gap-4">
       <h2 className="font-semibold text-gray-800 text-base text-center" style={{ fontFamily: "'Cinzel', serif" }}>
