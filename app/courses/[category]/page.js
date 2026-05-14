@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { courseData } from "@/lib/courseData";
+import { client } from "@/sanity/lib/client";
 
 function CourseCard({ id, course, category }) {
   return (

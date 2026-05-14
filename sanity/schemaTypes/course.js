@@ -11,6 +11,13 @@ export const course = defineType({
       type: 'string'
     }),
     defineField({
+      name: 'subject',
+      title: 'Subject',
+      type: 'reference',
+      to: [{ type: 'courseCategory' }],
+      description: 'Select the subject category for this course or make a new one'
+    }),
+    defineField({
       name: 'slug',
       title: 'Slug',
       type: 'slug',
