@@ -16,12 +16,11 @@ import string
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), ".env"), override=True)
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
 TOKEN_EXPIRES = int(os.getenv("TOKEN_EXPIRES", 3600))
 DATABASE_URL = os.getenv("DATABASE_URL")
-
 engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -60,7 +59,7 @@ def create_token(data:dict, expires_delta: Optional[timedelta] = None):
     if expires_delta:
         expires = datetime.utcnow() + expires_delta
     else:
-        expires = datetime.utcnow() + expires_delta(hours=TOKEN_EXPIRES) 
+        expires = datetime.utcnow() + expires_delta(seconds=TOKEN_EXPIRES*360) 
     copy.update({"exp":expires})
 
     en_jwt = jwt.encode(copy, SECRET_KEY, algorithm = ALGORITHM)
@@ -73,14 +72,15 @@ def verify_token(token:str) -> TokenData:
         if  username is None:
             raise HTTPException(status_code=401)
         return TokenData(username = username)
-    except jwt.JWTError:
+    except JWTError:
         raise HTTPException(status_code=401)
     
 class User(Base):
     __tablename__ = 'users'
     id = Column(Integer, Sequence('user_id_sequence'), primary_key = True)
-    username = Column(String(50), nullable = False)
-    password = Column(String(20), nullable = False)
+    username = Column(String(50), nullable = False, unique=True)
+    password = Column(String(200), nullable = False)
+    is_active = Column(Boolean, default=True)
 
     @classmethod
     def check_input(cls, db, username, password):
@@ -88,8 +88,8 @@ class User(Base):
             raise ValueError("The username cannot be empty.")
         if not password:
             raise ValueError("The password cannot be empty.")
-        if(db.query(User).filter(User.username == username).exists()):
-            raise ValueError("Username taken; Please try another.")
+        if db.query(User).filter(User.username == username).first():
+            raise ValueError("Please try another username.")
         if len(password) < 8:
             raise ValueError("The password cannot be shorter than 8 characters.")    
         if not any(character.isupper() for character in password):
@@ -101,18 +101,18 @@ class User(Base):
         if not any(c in string.punctuation for c in password):
             raise ValueError("The password must contain a special character.")    
         
-        @classmethod
-        def add(cls, db, username, password):
+    @classmethod
+    def add(cls, db, username, password):
             db.add(User(username, password))
             db.commit()
 
-        @classmethod
-        def check_password(cls, db, username, password):
-            user = db.query(User).filter(User.username == username).first()
-            if not argon2.verify(password,user.password):
-                user = False
-                raise HTTPException(status_code=401)
-            return user
+    @classmethod
+    def check_password(cls, db, username, password):
+        user = db.query(User).filter(User.username == username).first()
+        if not user or not argon2.verify(password,user.password):
+            raise HTTPException(status_code=401, detail="Username or password incorrect")
+        
+        return user
 
 class UserPy(BaseModel):
     username: str
@@ -133,11 +133,11 @@ def get_active(curr_user: User = Depends(get_user)):
 @app.post("/user")
 def add(user: UserPy, db: Session = Depends(get_db)):
     try:
-        User.check_input(user.username, user.password, db)
+        User.check_input(db, user.username, user.password)
     except ValueError as error:
         raise HTTPException(status_code = 400, detail = str(error))
     
-    User.add(db, user.username, user.password, True)
+    User.add(db, user.username, argon2.hash(user.password))
     return {"status": "user created"}
 
 class Login(BaseModel):
@@ -147,7 +147,7 @@ class Login(BaseModel):
 @app.post("/token", response_model = Token)
 def verify(login: Login, db: Session = Depends(get_db)):
     try:
-        user = User.check_password(login.username, login.password, db)
+        user = User.check_password(db, login.username, login.password)
     except ValueError as error:
         raise HTTPException(status_code = 401, detail = str(error))
     if not user.is_active:
