@@ -1,26 +1,17 @@
 /*Mahika Bagri*/
-/*March 6 2026*/
-
-/* 
-Key: 
-_ = TODO 
-Framework Finished 
-Graphics/CSS Needed
-Feel Free to Change Tags/ClassNames 
-Account Form not yet Integrated into Website 
-Remember Me/Forgot Password not Implemented 
-Error Throwing implemented Differently from HiFi 
-*/ 
+/*May 18 2026*/
 
 "use client";
 
 import InputField from "@/components/InputField";
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useEffect} from "react";
+import { useRouter, useSearchParams} from "next/navigation";
 
 export default function Page(){
     const router = useRouter();
     const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
+    const params = useSearchParams();
 
     const handleSignUp = async (e) => {
         e.preventDefault()
@@ -40,32 +31,34 @@ export default function Page(){
                 }),
             });
             
-            const data = await res.json();
+            const data = await res.json().catch(() => ({}));
 
             if (!res.ok) {
-                setErrors(data.detail||"Something went wrong");
+                setErrors([data.detail || "Something went wrong"]);
                 return;
             }
             setErrors([]);
             setUsername("");
             setPassword("");
             setPasswordVerify("");
-        } catch (errors) {
-            setErrors(...errors, ["Servers Unreachable. Try again later."])
+        } catch (err) {
+            console.error("Signup fetch error:", err);
+            setErrors(["Servers Unreachable. Try again later."])
         }
     };
 
     const checkPassword = () => {
+        setErrors([]);
         if(password !== passwordVerify){
-            setErrors(...errors, "Passwords do not match");
+            setErrors(["Passwords do not match"]);
             return false;
         }
         if(password.length < 8){
-            setErrors(...errors, "Password must be at least 8 characters long");
+            setErrors(["Password must be at least 8 characters long"]);
             return false;
         }
         if(!/\d/.test(password)){
-            setErrors(...errors, "Password must contain at least one number");
+            setErrors(["Password must contain at least one number"]);
             return false;
         }
         return true;
@@ -73,6 +66,7 @@ export default function Page(){
 
     const handleLogIn = async (e) => {
         e.preventDefault()
+
         try{
             const res = await fetch(`${API_URL}/token`, {
                 method: "POST",
@@ -85,23 +79,30 @@ export default function Page(){
                 }),
             });
             
-            const data = await res.json();
+            const data = await res.json().catch(() => ({}));
 
             if (!res.ok) {
-                setErrors(data.detail||"Something went wrong");
+                setErrors([data.detail || "Something went wrong"]);
                 return;
             }
 
             localStorage.setItem("token", data.access_token);
-            /*router.push("_");*/
+            router.push("/courses");
             setErrors([]);
             setUsername("");
             setPassword("");
-        } catch (errors) {
-            setErrors(...errors, ["Servers Unreachable. Try again later."])
+        } catch (err) {
+            console.error("Login fetch error:", err);
+            setErrors(["Servers Unreachable. Try again later."])
         }
 
     };
+
+    useEffect(() => {
+        const value = params.get("isLogin");
+        setIsLogin(value === "true");
+        setErrors([]);
+    }, [params]);
 
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
@@ -115,10 +116,18 @@ export default function Page(){
     }
 
     return(
-        <main>
+        <main
+        style={{
+            backgroundImage: "url('/loginBack.png')",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+            minHeight: "100vh",
+        }}
+        >
             { isLogin && (
                 <div className="h-full">
-                  <form className="flex flex-col justify-center items-center gap-6 w-1/4 p-4 pt-20 pb-20 rounded-4xl bg-[#eaf3fa] text-[#000105] fixed top-[150px] right-[calc(20%)]">
+                  <form className="flex flex-col justify-center items-center gap-6 w-1/4 p-4 pt-20 pb-20 rounded-4xl bg-[#eaf3fa] text-[#000105] relative top-[100px] right-[calc(-60%)]">
                     <h1 className="text-3xl font-semibold mb-3">Welcome Back!</h1>
                     <p>Login to your account</p>
 
@@ -145,12 +154,21 @@ export default function Page(){
                     <button className="bg-[#387333] rounded-4xl p-2 w-1/2 text-white mt-7" type="submit" onClick={handleLogIn}>Login</button>
                     <p>Don&apos;t have an account? <button className="text-[#387333] font-semibold" onClick={toggleForm}> Sign up</button>
                     </p>
+                                        {errors.length > 0 && (
+                                              <div className="w-full flex justify-center mt-[0px]">
+                                                <ul className="text-red-500 text-center p-0 m-0 space-y-0">
+                                                    {errors.map((error, index) => (
+                                                        <li key={index} className="m-0 leading-none">{error}</li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        )}
                   </form>
                 </div>
             )}
             { !isLogin && (
-                <div className="h-full">
-                  <form className="flex flex-col justify-center items-center gap-6 w-1/4 p-4 pt-20 pb-20 rounded-4xl bg-[#eaf3fa] text-[#000105] fixed top-[150px] right-[calc(20%)]">
+                                <div className="h-full">
+                                    <form className="flex flex-col justify-center items-center gap-6 w-1/4 p-4 pt-20 pb-20 rounded-4xl bg-[#eaf3fa] text-[#000105] relative top-[65px] right-[calc(-60%)]">
                     <h1 className="text-3xl font-semibold mb-3">Create an Account</h1>
 
                     <InputField
@@ -186,21 +204,19 @@ export default function Page(){
                     <button className="bg-[#387333] rounded-4xl p-2 w-1/2 text-white mt-7" type="submit" onClick={handleSignUp}>Sign Up</button>
                     <p>Already have an account? <button className="text-[#387333] font-semibold" onClick={toggleForm}> Log In</button>
                     </p>
+                                        {errors.length > 0 && (
+                                              <div className="w-full flex justify-center mt-[4px]">
+                                                <ul className="text-red-500 text-center p-0 m-0 space-y-0">
+                                                    {errors.map((error, index) => (
+                                                        <li key={index} className="m-0 leading-none">{error}</li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        )}
                   </form>
                 </div>
                 )}
-            {errors && (
-                <div>
-                    <ul>
-                        {errors.map((error, index) => (
-                            <li key={index} className="text-red-500">
-                                {error}
-                            </li>
-                        ))}
-                    </ul>
-                    
-                </div>
-            )}
+            
         </main>
     );
 }
