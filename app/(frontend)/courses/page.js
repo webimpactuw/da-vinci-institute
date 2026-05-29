@@ -2,14 +2,6 @@ import Link from "next/link";
 import { client } from "@/sanity/lib/client";
 import DynamicIcon from "@/components/ui/DynamicIcon";
 
-const courseCategories = [
-  { id: "writing",    label: "Writing",    icon: "✏️" },
-  { id: "statistics", label: "Statistics", icon: "📊" },
-  { id: "biology",    label: "Biology",    icon: "🌱" },
-  { id: "music",      label: "Music",      icon: "🎵" },
-  { id: "math",       label: "Math",       icon: "📐" },
-];
-
 export default async function CourseCategoriesPage() {
   const query = `*[_type == "subject"] {
     subjectName,
