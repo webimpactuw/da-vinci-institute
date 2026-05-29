@@ -19,10 +19,7 @@ export default function RootLayout({ children }) {
       <body
         className={`${josefinSans.className} antialiased h-full`}
       >
-        <Navbar />
         {children}
-        <Footer />
-      
       </body>
     </html>
   );
