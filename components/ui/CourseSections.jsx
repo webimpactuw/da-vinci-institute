@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { PortableText } from "next-sanity";
+import { client, urlFor } from "@/sanity/lib/client";
 
 // Shared: progress bar + bookmark footer
 function CardFooter({ progress = 0 }) {
@@ -82,7 +83,11 @@ export function ImageCard({ title, imageSrc, imageAlt = "", progress = 0 }) {
       </h2>
       <div className="w-full aspect-video bg-gray-300 rounded-xl overflow-hidden flex items-center justify-center">
         {imageSrc ? (
-          <img src={imageSrc} alt={imageAlt} className="w-full h-full object-cover" />
+          <img
+            src={urlFor(imageSrc).url()}
+            alt={imageAlt}
+            className="w-full h-full object-cover"
+          />
         ) : (
           <div className="flex flex-col items-center gap-2 text-gray-400">
             <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
@@ -109,7 +114,11 @@ export function ImageTextCard({ title, imageSrc, imageAlt = "", text, progress =
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="sm:w-2/5 flex-shrink-0 bg-gray-300 rounded-xl overflow-hidden aspect-square sm:aspect-auto flex items-center justify-center min-h-[120px]">
           {imageSrc ? (
-            <img src={imageSrc} alt={imageAlt} className="w-full h-full object-cover" />
+            <img
+              src={urlFor(imageSrc).url()}
+              alt={imageAlt}
+              className="w-full h-full object-cover"
+            />
           ) : (
             <div className="flex flex-col items-center gap-1 text-gray-400">
               <svg width="28" height="28" viewBox="0 0 36 36" fill="none">
