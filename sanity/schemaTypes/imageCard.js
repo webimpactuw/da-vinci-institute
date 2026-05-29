@@ -12,9 +12,12 @@ export const imageCard = defineType({
     }),
     defineField({
       name: 'imageSrc',
-      title: 'Image Source',
-      type: 'string',
-      description: 'URL of the image to display in this card'
+      title: 'Image File',
+      type: 'image',
+      options: {
+        hotspot: true
+      },
+      validation: (Rule) => Rule.required()
     }),
     defineField({
       name: 'imageAlt',

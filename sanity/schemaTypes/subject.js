@@ -8,7 +8,8 @@ export const subject = defineType({
     defineField({
       name: 'subjectName',
       title: 'Subject Name',
-      type: 'string'
+      type: 'string',
+      validation: (Rule) => Rule.required()
     }),
     defineField({
       name: 'slug',
@@ -18,5 +19,14 @@ export const subject = defineType({
         source: 'subjectName'
       }
     }),
+    defineField({
+      name: 'icon',
+      title: 'Icon',
+      type: 'iconPicker',
+      options: {
+        providers: ["fa", "fi"]
+      },
+      validation: (Rule) => Rule.required()
+    })
   ]
 })

@@ -30,7 +30,6 @@ export default async function CoursePage({ params }) {
   }`
   const queryParams = { courseId };
   const course = await client.fetch(query, queryParams);
-  console.log(course);
 
   if (!course) {
     return (

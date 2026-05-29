@@ -15,6 +15,7 @@ export const videoCard = defineType({
       title: "Video URL",
       type: "url",
       description: "URL to YouTube, Vimeo, or a hosted video file",
+      validation: (Rule) => Rule.required()
     }),
   ],
 });
