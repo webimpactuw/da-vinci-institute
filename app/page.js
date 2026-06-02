@@ -1,3 +1,5 @@
+"use client";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import FAQItem from "@/components/ui/Faqitem";
@@ -32,7 +34,25 @@ const beliefs = [
   "The individual has a responsibility to use their abilities for the general advancement of mankind.",
 ];
 
+/* ── Title cycling words ── */
+const titleWords = ["Arts", "Sciences", "Humanities"];
+
 export default function HomePage() {
+  // Cycling title words
+  const [wordIdx, setWordIdx] = useState(0);
+  const [fading, setFading] = useState(false);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFading(true);
+      setTimeout(() => {
+        setWordIdx(i => (i + 1) % titleWords.length);
+        setFading(false);
+      }, 400);
+    }, 2500);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <main className="bg-white text-gray-800" style={{ fontFamily: "'Lato', sans-serif" }}>
 
@@ -46,12 +66,28 @@ export default function HomePage() {
           priority
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/20 to-black/55" />
-        <h1
-          className="relative z-10 text-white text-5xl md:text-6xl font-light tracking-[0.2em] mb-10 drop-shadow-lg"
-          style={{ fontFamily: "'Cinzel', serif" }}
-        >
-          Da Vinci Institute
-        </h1>
+        <div className="relative z-10 flex flex-col items-center mb-10">
+          <h1
+            className="text-white text-5xl md:text-6xl font-light tracking-[0.2em] drop-shadow-lg"
+            style={{ fontFamily: "'Cinzel', serif" }}
+          >
+            Da Vinci Institute
+          </h1>
+          <div className="flex flex-col items-center mt-2" style={{ fontFamily: "'Cinzel', serif" }}>
+            <span className="text-white text-2xl font-light tracking-widest drop-shadow-lg">of</span>
+            <span
+              className="text-white text-3xl font-light tracking-widest drop-shadow-lg"
+              style={{
+                opacity: fading ? 0 : 1,
+                transform: fading ? "translateY(-6px)" : "translateY(0)",
+                display: "inline-block",
+                transition: "opacity 0.4s ease, transform 0.4s ease",
+              }}
+            >
+              {titleWords[wordIdx]}
+            </span>
+          </div>
+        </div>
       </section>
 
       {/* ── About Us ── */}
@@ -64,7 +100,7 @@ export default function HomePage() {
         </h2>
 
         {/* Our Mission */}
-        <div className="flex flex-col md:flex-row gap-8 mb-14">
+        <div className="flex flex-col md:flex-row gap-8 mb-6">
           <div className="md:w-2/5 flex-shrink-0">
             <Image
               src="/grad.png"
@@ -81,6 +117,7 @@ export default function HomePage() {
             >
               Our Mission
             </h3>
+            <hr className="border-t border-gray-200 mb-10" />
             <p className="text-sm text-gray-600 leading-relaxed">
               Da Vinci Institute seeks to provide personalized education to students all around
               the world who have different learning methods and needs that are not satisfied by
@@ -92,25 +129,12 @@ export default function HomePage() {
             </p>
           </div>
         </div>
-
-        {/* Our Beliefs */}
-        <h3
-          className="text-xl font-semibold text-center mb-6 text-gray-800"
-          style={{ fontFamily: "'Cinzel', serif" }}
-        >
-          Our Beliefs
-        </h3>
-        <div className="space-y-3 text-sm text-gray-600 text-center max-w-2xl mx-auto">
-          {beliefs.map((b, i) => (
-            <p key={i} className="leading-relaxed">{b}</p>
-          ))}
-        </div>
       </section>
 
       {/* ── Courses We Offer ── */}
       <section className="px-6 pb-16 max-w-4xl mx-auto">
         <h2
-          className="text-xl font-light tracking-widest mb-6 text-gray-800"
+          className="text-xl font-bold tracking-widest mb-6 text-gray-800"
           style={{ fontFamily: "'Cinzel', serif" }}
         >
           Courses We Offer
@@ -120,21 +144,21 @@ export default function HomePage() {
             <div key={c.id} className="flex-shrink-0 flex flex-col items-center gap-2">
               <Link
                 href="/courses"
-                className="w-[100px] h-[100px] bg-[#4a7c59] rounded-lg flex items-center justify-center text-4xl hover:bg-[#3d6b4a] transition-colors"
+                className="w-[140px] h-[140px] bg-[#4a7c59] rounded-lg flex items-center justify-center text-5xl hover:bg-[#3d6b4a] transition-colors"
               >
                 {c.icon}
               </Link>
-              <span className="text-xs text-gray-600">{c.label}</span>
+              <span className="text-sm text-gray-600">{c.label}</span>
             </div>
           ))}
           <div className="flex-shrink-0 flex flex-col items-center gap-2">
             <Link
               href="/courses"
-              className="w-[100px] h-[100px] bg-[#4a7c59] rounded-lg flex items-center justify-center text-white text-2xl hover:bg-[#3d6b4a] transition-colors"
+              className="w-[140px] h-[140px] bg-[#4a7c59] rounded-lg flex items-center justify-center text-white text-3xl hover:bg-[#3d6b4a] transition-colors"
             >
               →
             </Link>
-            <span className="text-xs text-gray-600">More</span>
+            <span className="text-sm text-gray-600">More</span>
           </div>
         </div>
         <div className="flex gap-1.5 justify-center mt-5">
@@ -142,6 +166,26 @@ export default function HomePage() {
           <span className="w-2 h-2 rounded-full bg-gray-300 inline-block" />
           <span className="w-2 h-2 rounded-full bg-gray-300 inline-block" />
         </div>
+      </section>
+
+      {/* Our Beliefs */}
+      <section className="max-w-4xl mx-auto px-6 py-16">
+        <h3
+            className="text-xl font-bold text-center mb-8 text-gray-800"
+            style={{ fontFamily: "'Cinzel', serif" }}
+          >
+            Our Beliefs
+          </h3>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            {beliefs.map((b, i) => (
+              <div
+                key={i}
+                className="bg-[#003d55] rounded-lg p-5 flex items-center justify-center text-center"
+              >
+                <p className="text-sm text-white leading-relaxed">{b}</p>
+              </div>
+            ))}
+          </div>
       </section>
 
       {/* ── FAQ ── */}
