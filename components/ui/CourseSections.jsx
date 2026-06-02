@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { PortableText } from "next-sanity";
+import { client, urlFor } from "@/sanity/lib/client";
 
 // Shared: progress bar + bookmark footer
 function CardFooter({ progress = 0 }) {
@@ -23,22 +25,18 @@ function CardFooter({ progress = 0 }) {
 }
 
 // text card - Heading + subheading + one or more text blocks
-export function TextCard({ heading, subheading, blocks = [], progress = 0 }) {
+export function TextCard({ title, subtitle, text = [], progress = 0 }) {
   return (
     <div className="bg-[#e8edf2] rounded-2xl p-6 flex flex-col gap-4">
       <div className="text-center">
         <h2 className="font-semibold text-gray-800 text-base" style={{ fontFamily: "'Cinzel', serif" }}>
-          {heading}
+          {title}
         </h2>
-        {subheading && (
-          <p className="text-xs text-gray-500 mt-0.5">{subheading}</p>
+        {subtitle && (
+          <p className="text-xs text-gray-500 mt-0.5">{subtitle}</p>
         )}
       </div>
-      {blocks.map((text, i) => (
-        <p key={i} className="text-sm text-gray-600 leading-relaxed"
-          dangerouslySetInnerHTML={{ __html: text }}
-        />
-      ))}
+      <PortableText value={text} className="text-sm text-gray-600 leading-relaxed" />
       <CardFooter progress={progress} />
     </div>
   );
@@ -77,6 +75,7 @@ export function VideoCard({ title, videoUrl, progress = 0 }) {
 
 // image card - Title + image
 export function ImageCard({ title, imageSrc, imageAlt = "", progress = 0 }) {
+  console.log(imageSrc);
   return (
     <div className="bg-[#e8edf2] rounded-2xl p-6 flex flex-col gap-4">
       <h2 className="font-semibold text-gray-800 text-base text-center" style={{ fontFamily: "'Cinzel', serif" }}>
@@ -84,7 +83,11 @@ export function ImageCard({ title, imageSrc, imageAlt = "", progress = 0 }) {
       </h2>
       <div className="w-full aspect-video bg-gray-300 rounded-xl overflow-hidden flex items-center justify-center">
         {imageSrc ? (
-          <img src={imageSrc} alt={imageAlt} className="w-full h-full object-cover" />
+          <img
+            src={urlFor(imageSrc).url()}
+            alt={imageAlt}
+            className="w-full h-full object-cover"
+          />
         ) : (
           <div className="flex flex-col items-center gap-2 text-gray-400">
             <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
@@ -111,7 +114,11 @@ export function ImageTextCard({ title, imageSrc, imageAlt = "", text, progress =
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="sm:w-2/5 flex-shrink-0 bg-gray-300 rounded-xl overflow-hidden aspect-square sm:aspect-auto flex items-center justify-center min-h-[120px]">
           {imageSrc ? (
-            <img src={imageSrc} alt={imageAlt} className="w-full h-full object-cover" />
+            <img
+              src={urlFor(imageSrc).url()}
+              alt={imageAlt}
+              className="w-full h-full object-cover"
+            />
           ) : (
             <div className="flex flex-col items-center gap-1 text-gray-400">
               <svg width="28" height="28" viewBox="0 0 36 36" fill="none">

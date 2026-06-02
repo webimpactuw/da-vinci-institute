@@ -1,3 +1,6 @@
+//Mahika Bagri 
+//May 18 2026 
+
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -93,13 +96,13 @@ export default function Navbar() {
       {/* RIGHT — Log In + Sign Up */}
       <div className="flex items-center gap-10 ml-auto">
         <Link
-          href="/login"
+          href="/accountForm?isLogin=true"
           className="text-white text-sm tracking-wide hover:opacity-80 transition-opacity"
         >
           Log In
         </Link>
         <Link
-          href="/signup"
+          href="/accountForm?isLogin=false"
           className="bg-white text-[#003d55] text-sm font-bold rounded-full px-5 py-2 hover:bg-gray-100 transition-colors"
         >
           Sign Up

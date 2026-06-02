@@ -3,15 +3,8 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import FAQItem from "@/components/ui/Faqitem";
-
-/* ── Course data ── */
-const courses = [
-  { id: 1, label: "Writing",    icon: "✏️" },
-  { id: 2, label: "Statistics", icon: "📊" },
-  { id: 3, label: "Biology",    icon: "🌱" },
-  { id: 4, label: "Music",      icon: "🎵" },
-  { id: 5, label: "Math",       icon: "📐" },
-];
+import { client } from "@/sanity/lib/client";
+import DynamicIcon from "@/components/ui/DynamicIcon";
 
 /* ── FAQ data ── */
 const faqs = [
@@ -41,6 +34,12 @@ export default function HomePage() {
   // Cycling title words
   const [wordIdx, setWordIdx] = useState(0);
   const [fading, setFading] = useState(false);
+  const query = `*[_type == "subject"] {
+    subjectName,
+    slug,
+    "iconName": icon.name,
+  }`
+  const courses = await client.fetch(query);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -52,6 +51,7 @@ export default function HomePage() {
     }, 2500);
     return () => clearInterval(interval);
   }, []);
+
 
   return (
     <main className="bg-white text-gray-800" style={{ fontFamily: "'Lato', sans-serif" }}>
@@ -139,14 +139,21 @@ export default function HomePage() {
         >
           Courses We Offer
         </h2>
+
+        
         <div className="flex gap-5 overflow-x-auto pb-2 scrollbar-hide">
           {courses.map((c) => (
-            <div key={c.id} className="flex-shrink-0 flex flex-col items-center gap-2">
+            <div key={c.slug.current} className="shrink-0 flex flex-col items-center gap-2">
               <Link
+<<<<<<< HEAD:app/page.js
                 href="/courses"
                 className="w-[140px] h-[140px] bg-[#4a7c59] rounded-lg flex items-center justify-center text-5xl hover:bg-[#3d6b4a] transition-colors"
+=======
+                href={`/courses/${c.slug.current}`}
+                className="w-[100px] h-[100px] bg-[#4a7c59] rounded-lg flex items-center justify-center text-4xl hover:bg-[#3d6b4a] transition-colors"
+>>>>>>> main:app/(frontend)/page.js
               >
-                {c.icon}
+                <DynamicIcon iconName={c.iconName} size={32} className="text-white" />
               </Link>
               <span className="text-sm text-gray-600">{c.label}</span>
             </div>
