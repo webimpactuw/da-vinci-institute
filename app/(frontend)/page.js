@@ -1,8 +1,11 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import FAQItem from "@/components/ui/Faqitem";
 import { client } from "@/sanity/lib/client";
 import DynamicIcon from "@/components/ui/DynamicIcon";
+import RotatingText from "@/components/ui/RotatingText.jsx";
 
 /* ── FAQ data ── */
 const faqs = [
@@ -34,10 +37,11 @@ export default async function HomePage() {
   const courses = await client.fetch(query);
 
   return (
-    <main className="bg-white text-gray-800" style={{ fontFamily: "'Lato', sans-serif" }}>
-
-      {/* ── hero ── */}
-      <section className="relative h-[420px] flex items-end justify-center overflow-hidden">
+    <main className="bg-white text-gray-800">
+      {/* ── Hero ── */}
+      <section 
+        className="relative w-full h-dvh flex flex-col justify-center items-center overflow-hidden shrink-0"
+      >
         <Image
           src="/homeBackground.png"
           alt="Da Vinci Institute building"
@@ -47,24 +51,22 @@ export default async function HomePage() {
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/20 to-black/55" />
         <h1
-          className="relative z-10 text-white text-5xl md:text-6xl font-light tracking-[0.2em] mb-10 drop-shadow-lg"
-          style={{ fontFamily: "'Cinzel', serif" }}
+          className="relative z-10 text-white text-8xl tracking-[0.2em] mb-4 drop-shadow-lg linden-hill-regular"
         >
           Da Vinci Institute
         </h1>
-      </section>
+        <h1
+          className="relative z-10 text-white text-6xl tracking-[0.2em] mb-6 drop-shadow-lg linden-hill-regular"
+        >
+          of
+        </h1>
+        <RotatingText />
+      </section> 
 
       {/* ── About Us ── */}
-      <section className="max-w-4xl mx-auto px-6 py-16">
-        <h2
-          className="text-center text-3xl font-light tracking-widest mb-10 text-gray-800"
-          style={{ fontFamily: "'Cinzel', serif" }}
-        >
-          About Us
-        </h2>
-
+      <section className="max-w-5xl min-w-1/2 mx-auto px-6 py-16">
         {/* Our Mission */}
-        <div className="flex flex-col md:flex-row gap-8 mb-14">
+        <div className="flex flex-col md:flex-row gap-8 mb-30">
           <div className="md:w-2/5 flex-shrink-0">
             <Image
               src="/grad.png"
@@ -76,12 +78,12 @@ export default async function HomePage() {
           </div>
           <div className="md:w-3/5">
             <h3
-              className="text-lg font-semibold mb-3 text-gray-800"
-              style={{ fontFamily: "'Cinzel', serif" }}
+              className="text-3xl font-semibold mb-3 text-gray-800"
             >
               Our Mission
             </h3>
-            <p className="text-sm text-gray-600 leading-relaxed">
+            <hr className="border-black mb-4" />
+            <p className="text-md text-gray-600 leading-relaxed">
               Da Vinci Institute seeks to provide personalized education to students all around
               the world who have different learning methods and needs that are not satisfied by
               the public education system. We strive to recognize the potential in each student
@@ -92,69 +94,62 @@ export default async function HomePage() {
             </p>
           </div>
         </div>
+        
+        {/* ── Courses We Offer ── */}
+        <section className="mx-auto mb-30">
+          <h2
+            className="text-3xl font-semibold tracking-widest mb-6 text-gray-800"
+          >
+            Courses We Offer
+          </h2>
+          
+          <div className="flex gap-5 overflow-x-auto scrollbar-hide">
+            {courses.map((c) => (
+              <div key={c.slug.current} className="shrink-0 flex flex-col items-center gap-2">
+                <Link
+                  href={`/courses/${c.slug.current}`}
+                  className="p-10 bg-[#4a7c59] rounded-lg flex items-center justify-center text-4xl hover:bg-[#3d6b4a] transition-colors"
+                >
+                  <DynamicIcon iconName={c.iconName} size={72} className="text-white" />
+                </Link>
+                <span className="text-xl font-semibold text-gray-600">{c.subjectName}</span>
+              </div>
+            ))}
+            <div className="flex-shrink-0 flex flex-col items-center gap-2">
+              <Link
+                href="/courses"
+                className="p-10 bg-[#4a7c59] rounded-lg flex items-center justify-center text-white text-[64px] hover:bg-[#3d6b4a] transition-colors"
+              >
+                <DynamicIcon iconName={"fa_arrow_right"} size={72} className="text-white" />
+              </Link>
+              <span className="text-xl font-semibold text-gray-600">More</span>
+            </div>
+          </div>
+        </section>
 
         {/* Our Beliefs */}
         <h3
-          className="text-xl font-semibold text-center mb-6 text-gray-800"
-          style={{ fontFamily: "'Cinzel', serif" }}
+          className="text-3xl mb-6 font-semibold text-center text-gray-800"
         >
           Our Beliefs
         </h3>
-        <div className="space-y-3 text-sm text-gray-600 text-center max-w-2xl mx-auto">
+        <div className="space-y-3 p-2 text-md text-white text-center w-full mx-auto">
           {beliefs.map((b, i) => (
-            <p key={i} className="leading-relaxed">{b}</p>
-          ))}
-        </div>
-      </section>
-
-      {/* ── Courses We Offer ── */}
-      <section className="px-6 pb-16 max-w-4xl mx-auto">
-        <h2
-          className="text-xl font-light tracking-widest mb-6 text-gray-800"
-          style={{ fontFamily: "'Cinzel', serif" }}
-        >
-          Courses We Offer
-        </h2>
-
-        
-        <div className="flex gap-5 overflow-x-auto pb-2 scrollbar-hide">
-          {courses.map((c) => (
-            <div key={c.slug.current} className="shrink-0 flex flex-col items-center gap-2">
-              <Link
-                href={`/courses/${c.slug.current}`}
-                className="w-[100px] h-[100px] bg-[#4a7c59] rounded-lg flex items-center justify-center text-4xl hover:bg-[#3d6b4a] transition-colors"
-              >
-                <DynamicIcon iconName={c.iconName} size={32} className="text-white" />
-              </Link>
-              <span className="text-xs text-gray-600">{c.label}</span>
+            <div key={i} class="h-20 flex items-center justify-center bg-[#003D55] p-2 w-full rounded-lg">
+              <p className="leading-relaxed pr-13 pl-13">{b}</p>
             </div>
           ))}
-          <div className="flex-shrink-0 flex flex-col items-center gap-2">
-            <Link
-              href="/courses"
-              className="w-[100px] h-[100px] bg-[#4a7c59] rounded-lg flex items-center justify-center text-white text-2xl hover:bg-[#3d6b4a] transition-colors"
-            >
-              →
-            </Link>
-            <span className="text-xs text-gray-600">More</span>
-          </div>
-        </div>
-        <div className="flex gap-1.5 justify-center mt-5">
-          <span className="w-2 h-2 rounded-full bg-gray-500 inline-block" />
-          <span className="w-2 h-2 rounded-full bg-gray-300 inline-block" />
-          <span className="w-2 h-2 rounded-full bg-gray-300 inline-block" />
         </div>
       </section>
 
       {/* ── FAQ ── */}
-      <section className="bg-[#003d55] py-16 px-6">
+      <section className="py-16">
         <h2
-          className="text-center text-3xl font-light tracking-widest text-white mb-10"
-          style={{ fontFamily: "'Cinzel', serif" }}
+          className="text-3xl font-semibold text-center mb-6 text-gray-800"
         >
           Frequently Asked Questions
         </h2>
-        <div className="max-w-xl mx-auto space-y-3">
+        <div className="max-w-2xl mx-auto space-y-3">
           {faqs.map((faq, i) => (
             <FAQItem key={i} question={faq.q} answer={faq.a} />
           ))}

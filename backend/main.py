@@ -8,7 +8,7 @@ from fastapi import FastAPI, HTTPException, APIRouter, Depends
 from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
-from passlib.hash import argon2 
+from passlib.hash import argon2
 from passlib.context import CryptContext
 from jose import jwt, JWTError
 from typing import Optional

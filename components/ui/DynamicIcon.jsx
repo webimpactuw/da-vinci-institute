@@ -12,7 +12,7 @@ const toPascalCase = (string) => {
 
 const DynamicIcon = ({ iconName, size = 24, className = "" }) => {
   if (!iconName) return null;
-  const formattedName = toPascalCase(iconName); 
+  const formattedName = toPascalCase(iconName);
 
   const prefix = formattedName.substring(0, 2);
   let IconComponent = null;

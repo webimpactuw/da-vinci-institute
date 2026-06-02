@@ -1,7 +1,5 @@
 import { Josefin_Sans } from "next/font/google";
 import "./globals.css";
-import Navbar from "@/components/ui/Navbar";
-import Footer from "@/components/ui/Footer";
 
 const josefinSans = Josefin_Sans({
   variable: "--font-josefin-sans",
@@ -16,8 +14,14 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className="h-full">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="true" />
+        <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Josefin+Sans:ital,wght@0,100..700;1,100..700&family=Linden+Hill:ital@0;1&display=swap" rel="stylesheet" />
+        <title>Da Vinci Institute</title>
+      </head>
       <body
-        className={`${josefinSans.className} antialiased h-full`}
+        className={`${josefinSans.className} antialiased`}
       >
         {children}
       </body>

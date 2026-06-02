@@ -6,10 +6,10 @@ export default function FAQItem({ question, answer }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="bg-white rounded-lg overflow-hidden">
+    <div className="bg-[#E3E3E3] rounded-lg overflow-hidden">
       <button
         onClick={() => setOpen((p) => !p)}
-        className="w-full flex items-center justify-between px-5 py-4 text-sm font-medium text-gray-800 hover:bg-gray-50 transition-colors"
+        className="w-full flex items-center justify-between px-5 py-4 text-sm font-md text-gray-800 hover:bg-[#D3D3D3] transition-colors"
       >
         {question}
         <svg
@@ -20,7 +20,7 @@ export default function FAQItem({ question, answer }) {
         </svg>
       </button>
       {open && (
-        <div className="px-5 pb-4 text-sm text-gray-600 leading-relaxed border-t border-gray-100">
+        <div className="px-5 pb-4 pt-4 text-sm text-gray-600 leading-relaxed border-t border-gray-100">
           {answer}
         </div>
       )}
