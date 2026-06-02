@@ -30,7 +30,7 @@ const beliefs = [
 /* ── Title cycling words ── */
 const titleWords = ["Arts", "Sciences", "Humanities"];
 
-export default function HomePage() {
+export default async function HomePage() {
   // Cycling title words
   const [wordIdx, setWordIdx] = useState(0);
   const [fading, setFading] = useState(false);
@@ -145,13 +145,8 @@ export default function HomePage() {
           {courses.map((c) => (
             <div key={c.slug.current} className="shrink-0 flex flex-col items-center gap-2">
               <Link
-<<<<<<< HEAD:app/page.js
-                href="/courses"
-                className="w-[140px] h-[140px] bg-[#4a7c59] rounded-lg flex items-center justify-center text-5xl hover:bg-[#3d6b4a] transition-colors"
-=======
                 href={`/courses/${c.slug.current}`}
-                className="w-[100px] h-[100px] bg-[#4a7c59] rounded-lg flex items-center justify-center text-4xl hover:bg-[#3d6b4a] transition-colors"
->>>>>>> main:app/(frontend)/page.js
+                className="w-[140px] h-[140px] bg-[#4a7c59] rounded-lg flex items-center justify-center text-5xl hover:bg-[#3d6b4a] transition-colors"
               >
                 <DynamicIcon iconName={c.iconName} size={32} className="text-white" />
               </Link>
