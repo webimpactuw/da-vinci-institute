@@ -29,7 +29,7 @@ export function TextCard({ title, subtitle, text = [], progress = 0 }) {
   return (
     <div className="bg-[#e8edf2] rounded-2xl p-6 flex flex-col gap-4">
       <div className="text-center">
-        <h2 className="font-semibold text-gray-800 text-base" style={{ fontFamily: "'Cinzel', serif" }}>
+        <h2 className="font-semibold text-gray-800 text-base">
           {title}
         </h2>
         {subtitle && (

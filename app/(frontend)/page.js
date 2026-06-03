@@ -1,5 +1,3 @@
-"use client";
-
 import Image from "next/image";
 import Link from "next/link";
 import FAQItem from "@/components/ui/Faqitem";
@@ -135,7 +133,7 @@ export default async function HomePage() {
         </h3>
         <div className="space-y-3 p-2 text-md text-white text-center w-full mx-auto">
           {beliefs.map((b, i) => (
-            <div key={i} class="h-20 flex items-center justify-center bg-[#003D55] p-2 w-full rounded-lg">
+            <div key={i} className="h-20 flex items-center justify-center bg-[#003D55] p-2 w-full rounded-lg">
               <p className="leading-relaxed pr-13 pl-13">{b}</p>
             </div>
           ))}

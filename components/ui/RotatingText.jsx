@@ -15,7 +15,7 @@ export default function RotatingText() {
       setIndex((prev) => (prev + 1) % words.length);
     }, 2500); // Changes every 2.5 seconds
 
-    return () => clearInterval(interval); // Cleanup!
+    return () => clearInterval(interval);
   }, []);
 
   return (
