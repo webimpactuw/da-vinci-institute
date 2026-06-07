@@ -41,6 +41,7 @@ export default function Page(){
             setUsername("");
             setPassword("");
             setPasswordVerify("");
+            router.push("/accountForm?isLogin=true");
         } catch (err) {
             console.error("Signup fetch error:", err);
             setErrors(["Servers Unreachable. Try again later."])

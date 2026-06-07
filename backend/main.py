@@ -109,7 +109,7 @@ class User(Base):
         
     @classmethod
     def add(cls, db, username, password):
-            db.add(User(username, password))
+            db.add(User(username=username, password=password))
             db.commit()
 
     @classmethod
