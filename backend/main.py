@@ -1,8 +1,8 @@
 #Mahika Bagri
-#March 5 2026
+#June 6 2026
 
 from datetime import date, timedelta, datetime
-from sqlalchemy import Column, Integer, String, Boolean, Sequence, create_engine
+from sqlalchemy import Column, Integer, String, Boolean, Sequence, ForeignKey, UniqueConstraint, create_engine
 from sqlalchemy.orm import sessionmaker, relationship, declarative_base, Session
 from fastapi import FastAPI, HTTPException, APIRouter, Depends
 from fastapi.security import OAuth2PasswordBearer
@@ -11,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from passlib.hash import argon2 
 from passlib.context import CryptContext
 from jose import jwt, JWTError
-from typing import Optional
+from typing import Optional, List
 import string 
 import os
 from dotenv import load_dotenv
@@ -31,12 +31,18 @@ app = FastAPI()
 
 scheme = OAuth2PasswordBearer(tokenUrl = "token")
 
+ALLOWED_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",")
+    if origin.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 def get_db():
@@ -103,7 +109,7 @@ class User(Base):
         
     @classmethod
     def add(cls, db, username, password):
-            db.add(User(username, password))
+            db.add(User(username=username, password=password))
             db.commit()
 
     @classmethod
@@ -157,5 +163,226 @@ def verify(login: Login, db: Session = Depends(get_db)):
     token = create_token(data = {"sub":user.username}, expires_delta = token_expires)
 
     return {"access_token": token, "token_type": "bearer"}
+
+# ── Course Progress ──────────────────────────────────────────────────────────
+
+class CourseProgress(Base):
+    """
+    Stores how far through each slide (0–100) a user is for a given course.
+    One row per (user, course_slug, slide_index).
+    """
+    __tablename__ = 'course_progress'
+    __table_args__ = (
+        UniqueConstraint('user_id', 'course_slug', 'slide_index', name='uq_progress'),
+    )
+
+    id          = Column(Integer, primary_key=True, autoincrement=True)
+    user_id     = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    course_slug = Column(String(200), nullable=False)
+    slide_index = Column(Integer, nullable=False)
+    progress    = Column(Integer, default=0)   # 0–100
+
+    user = relationship('User', backref='progress_entries')
+
+
+# ── Quiz Attempts ─────────────────────────────────────────────────────────────
+
+class QuizAttempt(Base):
+    """
+    Records the last quiz submission for a (user, course_slug, slide_index).
+    Only the most recent attempt is kept (upsert pattern).
+    """
+    __tablename__ = 'quiz_attempts'
+    __table_args__ = (
+        UniqueConstraint('user_id', 'course_slug', 'slide_index', name='uq_quiz'),
+    )
+
+    id             = Column(Integer, primary_key=True, autoincrement=True)
+    user_id        = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    course_slug    = Column(String(200), nullable=False)
+    slide_index    = Column(Integer, nullable=False)
+    selected_index = Column(Integer, nullable=False)  # index of chosen option
+    is_correct     = Column(Boolean, nullable=False)
+    submitted_at   = Column(String(50), nullable=False)  # ISO datetime string
+
+    user = relationship('User', backref='quiz_attempts')
+
+
+# ── Pydantic schemas ──────────────────────────────────────────────────────────
+
+class SlideProgressIn(BaseModel):
+    slide_index: int
+    progress: int   # 0–100
+
+class SlideProgressOut(BaseModel):
+    slide_index: int
+    progress: int
+
+class CourseProgressOut(BaseModel):
+    course_slug: str
+    slides: List[SlideProgressOut]
+
+class QuizSubmitIn(BaseModel):
+    slide_index: int
+    selected_index: int
+    is_correct: bool
+
+class QuizAttemptOut(BaseModel):
+    slide_index: int
+    selected_index: int
+    is_correct: bool
+    submitted_at: str
+
+
+# ── Progress endpoints ────────────────────────────────────────────────────────
+
+@app.get("/progress/{course_slug}", response_model=CourseProgressOut)
+def get_progress(
+    course_slug: str,
+    current_user: User = Depends(get_active),
+    db: Session = Depends(get_db),
+):
+    """Return all stored slide progress values for the current user + course."""
+    rows = (
+        db.query(CourseProgress)
+        .filter(
+            CourseProgress.user_id     == current_user.id,
+            CourseProgress.course_slug == course_slug,
+        )
+        .all()
+    )
+    slides = [SlideProgressOut(slide_index=r.slide_index, progress=r.progress) for r in rows]
+    return CourseProgressOut(course_slug=course_slug, slides=slides)
+
+
+@app.post("/progress/{course_slug}", response_model=SlideProgressOut)
+def upsert_progress(
+    course_slug: str,
+    body: SlideProgressIn,
+    current_user: User = Depends(get_active),
+    db: Session = Depends(get_db),
+):
+    """Create or update the progress for a single slide."""
+    if not (0 <= body.progress <= 100):
+        raise HTTPException(status_code=400, detail="Progress must be between 0 and 100.")
+
+    row = (
+        db.query(CourseProgress)
+        .filter(
+            CourseProgress.user_id     == current_user.id,
+            CourseProgress.course_slug == course_slug,
+            CourseProgress.slide_index == body.slide_index,
+        )
+        .first()
+    )
+
+    if row:
+        row.progress = body.progress
+    else:
+        row = CourseProgress(
+            user_id     = current_user.id,
+            course_slug = course_slug,
+            slide_index = body.slide_index,
+            progress    = body.progress,
+        )
+        db.add(row)
+
+    db.commit()
+    db.refresh(row)
+    return SlideProgressOut(slide_index=row.slide_index, progress=row.progress)
+
+
+# ── Quiz endpoints ────────────────────────────────────────────────────────────
+
+@app.get("/quiz/{course_slug}", response_model=List[QuizAttemptOut])
+def get_quiz_attempts(
+    course_slug: str,
+    current_user: User = Depends(get_active),
+    db: Session = Depends(get_db),
+):
+    """Return all saved quiz attempts for the current user + course."""
+    rows = (
+        db.query(QuizAttempt)
+        .filter(
+            QuizAttempt.user_id     == current_user.id,
+            QuizAttempt.course_slug == course_slug,
+        )
+        .all()
+    )
+    return [
+        QuizAttemptOut(
+            slide_index    = r.slide_index,
+            selected_index = r.selected_index,
+            is_correct     = r.is_correct,
+            submitted_at   = r.submitted_at,
+        )
+        for r in rows
+    ]
+
+
+@app.post("/quiz/{course_slug}", response_model=QuizAttemptOut)
+def submit_quiz(
+    course_slug: str,
+    body: QuizSubmitIn,
+    current_user: User = Depends(get_active),
+    db: Session = Depends(get_db),
+):
+    """Save (or overwrite) a quiz attempt and automatically set slide progress to 100."""
+    row = (
+        db.query(QuizAttempt)
+        .filter(
+            QuizAttempt.user_id     == current_user.id,
+            QuizAttempt.course_slug == course_slug,
+            QuizAttempt.slide_index == body.slide_index,
+        )
+        .first()
+    )
+
+    now = datetime.utcnow().isoformat()
+
+    if row:
+        row.selected_index = body.selected_index
+        row.is_correct     = body.is_correct
+        row.submitted_at   = now
+    else:
+        row = QuizAttempt(
+            user_id        = current_user.id,
+            course_slug    = course_slug,
+            slide_index    = body.slide_index,
+            selected_index = body.selected_index,
+            is_correct     = body.is_correct,
+            submitted_at   = now,
+        )
+        db.add(row)
+
+    # Automatically mark the quiz slide as complete (100%)
+    progress_row = (
+        db.query(CourseProgress)
+        .filter(
+            CourseProgress.user_id     == current_user.id,
+            CourseProgress.course_slug == course_slug,
+            CourseProgress.slide_index == body.slide_index,
+        )
+        .first()
+    )
+    if progress_row:
+        progress_row.progress = 100
+    else:
+        db.add(CourseProgress(
+            user_id     = current_user.id,
+            course_slug = course_slug,
+            slide_index = body.slide_index,
+            progress    = 100,
+        ))
+
+    db.commit()
+    db.refresh(row)
+    return QuizAttemptOut(
+        slide_index    = row.slide_index,
+        selected_index = row.selected_index,
+        is_correct     = row.is_correct,
+        submitted_at   = row.submitted_at,
+    )
+
 
 Base.metadata.create_all(bind=engine)

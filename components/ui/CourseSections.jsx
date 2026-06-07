@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PortableText } from "next-sanity";
 import { client, urlFor } from "@/sanity/lib/client";
+import { saveSlideProgress, submitQuizAnswer } from "@/lib/api";
 
 // Shared: progress bar + bookmark footer
 function CardFooter({ progress = 0 }) {
@@ -25,7 +26,12 @@ function CardFooter({ progress = 0 }) {
 }
 
 // text card - Heading + subheading + one or more text blocks
-export function TextCard({ title, subtitle, text = [], progress = 0 }) {
+export function TextCard({ title, subtitle, text = [], progress = 0, onView }) {
+  useEffect(() => {
+    if (onView) onView();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <div className="bg-[#e8edf2] rounded-2xl p-6 flex flex-col gap-4">
       <div className="text-center">
@@ -138,9 +144,30 @@ export function ImageTextCard({ title, imageSrc, imageAlt = "", text, progress =
 }
 
 // quiz card - Question + multiple choice options
-export function QuizCard({ title = "Quiz Card Section", question, options = [], progress = 0 }) {
-  const [selected, setSelected] = useState(null);
-  const [submitted, setSubmitted] = useState(false);
+export function QuizCard({
+  title = "Quiz Card Section",
+  question,
+  options = [],
+  progress = 0,
+  // persistence props
+  courseSlug,
+  slideIndex,
+  savedAttempt = null,   // { selectedIndex, isCorrect } from the DB
+}) {
+  // Seed state from the saved attempt so the card re-renders correctly on load
+  const [selected, setSelected]   = useState(savedAttempt?.selectedIndex ?? null);
+  const [submitted, setSubmitted] = useState(savedAttempt !== null);
+
+  const handleSubmit = async () => {
+    if (selected === null) return;
+    const correct = options[selected]?.correct ?? false;
+    setSubmitted(true);
+
+    // Persist to backend (best-effort — don't block the UI)
+    if (courseSlug != null && slideIndex != null) {
+      submitQuizAnswer(courseSlug, slideIndex, selected, correct).catch(console.error);
+    }
+  };
 
   return (
     <div className="bg-[#e8edf2] rounded-2xl p-6 flex flex-col gap-4">
@@ -173,7 +200,7 @@ export function QuizCard({ title = "Quiz Card Section", question, options = [], 
       </div>
       {selected !== null && !submitted && (
         <button
-          onClick={() => setSubmitted(true)}
+          onClick={handleSubmit}
           className="self-end bg-[#4a7c59] text-white text-xs font-bold rounded-full px-5 py-2 hover:bg-[#3d6b4a] transition-colors"
         >
           Submit
@@ -184,7 +211,7 @@ export function QuizCard({ title = "Quiz Card Section", question, options = [], 
           {options[selected]?.correct ? "✓ Correct!" : `✗ Incorrect. ${options.find(o => o.correct)?.explanation ?? ""}`}
         </p>
       )}
-      <CardFooter progress={progress} />
+      <CardFooter progress={submitted ? 100 : progress} />
     </div>
   );
 }
