@@ -1,5 +1,5 @@
-import Link from "next/link";
-import { redirect } from "next/navigation";
+import Link from "@/node_modules/next/link";
+import { redirect } from "@/node_modules/next/navigation";
 import { courseData } from "@/lib/courseData";
 import { client } from "@/sanity/lib/client";
 

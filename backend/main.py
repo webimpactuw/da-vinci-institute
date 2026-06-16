@@ -21,7 +21,7 @@ TOKEN_EXPIRES = int(os.getenv("TOKEN_EXPIRES", 3600))
 MONGO_URL = os.getenv("MONGODB_URI")
 DB_NAME = os.getenv("DB_NAME")
 
-# --- BEANIE DOCUMENT (Your DB Schema + Pydantic Model combined) ---
+# --- BEANIE DOCUMENT ---
 class User(Document):
     username: str
     password: str  # Will store the hashed password
@@ -29,14 +29,13 @@ class User(Document):
     class Settings:
         name = "users"  # The MongoDB collection name
 
-# --- FASTAPI LIFESPAN (Database Initialization) ---
+# --- FASTAPI LIFESPAN ---
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     client = AsyncMongoClient(MONGO_URL)
 
     await init_beanie(database=client[DB_NAME], document_models=[User])
     yield
-    # Clean up database connections here if necessary
 
 app = FastAPI(lifespan=lifespan)
 
@@ -80,17 +79,15 @@ async def get_current_user(token: str = Depends(scheme)):
     except JWTError:
         raise HTTPException(status_code=401, detail="Could not validate credentials")
     
-    # Beanie query syntax is clean and readable:
     user = await User.find_one(User.username == username)
     if user is None:
         raise HTTPException(status_code=401, detail="User not found")
     return user
 
 # --- API ENDPOINTS ---
-
 @app.post("/user")
 async def register_user(user_data: UserCreate):
-    # 1. Check if user already exists using Beanie
+    # Check if user already exists using Beanie
     existing_user = await User.find_one(User.username == user_data.username)
     if existing_user:
         raise HTTPException(status_code=400, detail="Username already taken")
@@ -105,21 +102,20 @@ async def register_user(user_data: UserCreate):
         username=user_data.username,
         password=argon2.hash(user_data.password)
     )
-    # Beanie provides an inherent async .insert() method on Document instances
     await new_user.insert()
     
     return {"status": "user created"}
 
 @app.post("/token", response_model=TokenResponse)
 async def login(login_data: LoginRequest):
-    # 1. Find the user
+    # Find the user
     user = await User.find_one(User.username == login_data.username)
     
-    # 2. Verify password
+    # Verify password
     if not user or not argon2.verify(login_data.password, user.password):
         raise HTTPException(status_code=401, detail="Username or password incorrect")
     
-    # 3. Generate token
+    # Generate token
     token_expires = timedelta(seconds=TOKEN_EXPIRES)
     token = create_token(data={"sub": user.username}, expires_delta=token_expires)
 

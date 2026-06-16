@@ -5,7 +5,7 @@
 
 import InputField from "@/components/InputField";
 import React, { useState, useEffect} from "react";
-import { useRouter, useSearchParams} from "next/navigation";
+import { useRouter, useSearchParams} from "@/node_modules/next/navigation";
 
 export default function Page(){
     const router = useRouter();
@@ -36,6 +36,9 @@ export default function Page(){
             if (!res.ok) {
                 setErrors([data.detail || "Something went wrong"]);
                 return;
+            } else {
+                localStorage.setItem("token", data.access_token);
+                router.push("/courses");
             }
             setErrors([]);
             setUsername("");
@@ -127,8 +130,8 @@ export default function Page(){
         >
             { isLogin && (
                 <div className="h-full">
-                  <form className="flex flex-col justify-center items-center gap-6 w-1/4 p-4 pt-20 pb-20 rounded-4xl bg-[#eaf3fa] text-[#000105] relative top-[100px] right-[calc(-60%)]">
-                    <h1 className="text-3xl font-semibold mb-3">Welcome Back!</h1>
+                  <form className="flex flex-col justify-center items-center gap-6 w-1/3 min-w-100 p-4 pt-20 pb-20 rounded-4xl bg-[#eaf3fa] text-[#000105] relative top-[50px] right-[calc(-60%)]">
+                    <h1 className="text-3xl font-semibold mb-[-20px]">Welcome Back!</h1>
                     <p>Login to your account</p>
 
                     <InputField
@@ -168,7 +171,7 @@ export default function Page(){
             )}
             { !isLogin && (
                                 <div className="h-full">
-                                    <form className="flex flex-col justify-center items-center gap-6 w-1/4 p-4 pt-20 pb-20 rounded-4xl bg-[#eaf3fa] text-[#000105] relative top-[65px] right-[calc(-60%)]">
+                                    <form className="flex flex-col justify-center items-center gap-6 w-1/3 min-w-100 p-4 pt-15 pb-15 rounded-4xl bg-[#eaf3fa] text-[#000105] relative top-[50px] right-[calc(-60%)]">
                     <h1 className="text-3xl font-semibold mb-3">Create an Account</h1>
 
                     <InputField
@@ -204,15 +207,15 @@ export default function Page(){
                     <button className="bg-[#387333] rounded-4xl p-2 w-1/2 text-white mt-7" type="submit" onClick={handleSignUp}>Sign Up</button>
                     <p>Already have an account? <button className="text-[#387333] font-semibold" onClick={toggleForm}> Log In</button>
                     </p>
-                                        {errors.length > 0 && (
-                                              <div className="w-full flex justify-center mt-[4px]">
-                                                <ul className="text-red-500 text-center p-0 m-0 space-y-0">
-                                                    {errors.map((error, index) => (
-                                                        <li key={index} className="m-0 leading-none">{error}</li>
-                                                    ))}
-                                                </ul>
-                                            </div>
-                                        )}
+                      {errors.length > 0 && (
+                            <div className="w-full flex justify-center mt-[4px]">
+                              <ul className="text-red-500 text-center p-0 m-0 space-y-0">
+                                  {errors.map((error, index) => (
+                                      <li key={index} className="m-0 leading-none">{error}</li>
+                                  ))}
+                              </ul>
+                          </div>
+                      )}
                   </form>
                 </div>
                 )}

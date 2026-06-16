@@ -1,5 +1,5 @@
-import Link from "next/link";
-import { TextCard, VideoCard, ImageCard, ImageTextCard, QuizCard } from "@/components/ui/CourseSections";
+import Link from "@/node_modules/next/link";
+import { TextCard, VideoCard, ImageCard, ImageTextCard, QuizCard } from "@/frontend/components/ui/CourseSections";
 import { client } from "@/sanity/lib/client";
 
 /* ── Section renderer ───────────────────────── */
