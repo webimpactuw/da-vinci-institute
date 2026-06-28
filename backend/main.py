@@ -1,35 +1,46 @@
-#Mahika Bagri
-#March 5 2026
-
-from datetime import date, timedelta, datetime
-from sqlalchemy import Column, Integer, String, Boolean, Sequence, create_engine
-from sqlalchemy.orm import sessionmaker, relationship, declarative_base, Session
-from fastapi import FastAPI, HTTPException, APIRouter, Depends
-from fastapi.security import OAuth2PasswordBearer
-from pydantic import BaseModel
-from fastapi.middleware.cors import CORSMiddleware
-from passlib.hash import argon2 
-from passlib.context import CryptContext
-from jose import jwt, JWTError
-from typing import Optional
-import string 
 import os
+from datetime import datetime, timedelta
+from typing import Optional
+from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 
-load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), ".env"), override=True)
-SECRET_KEY = os.getenv("SECRET_KEY")
+from fastapi import FastAPI, HTTPException, Depends
+from fastapi.security import OAuth2PasswordBearer
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from passlib.hash import argon2
+from jose import jwt, JWTError
+from pymongo import AsyncMongoClient
+from beanie import Document, init_beanie
+
+# --- ENVIRONMENT SETUP ---
+load_dotenv()
+SECRET_KEY = os.getenv("SECRET_KEY", "your-super-secret-key")
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
 TOKEN_EXPIRES = int(os.getenv("TOKEN_EXPIRES", 3600))
-DATABASE_URL = os.getenv("DATABASE_URL")
-engine = create_engine(DATABASE_URL, pool_pre_ping=True)
+MONGO_URL = os.getenv("MONGODB_URI")
+DB_NAME = os.getenv("DB_NAME")
 
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+# --- BEANIE DOCUMENT ---
+class User(Document):
+    username: str
+    password: str  # Will store the hashed password
 
-Base = declarative_base()
+    class Settings:
+        name = "users"  # The MongoDB collection name
 
-app = FastAPI()
+# --- FASTAPI LIFESPAN ---
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    client = AsyncMongoClient(MONGO_URL)
 
-scheme = OAuth2PasswordBearer(tokenUrl = "token")
+    await init_beanie(database=client[DB_NAME], document_models=[User])
+    yield
+
+app = FastAPI(lifespan=lifespan)
+
+# --- SECURITY & CORS ---
+scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 app.add_middleware(
     CORSMiddleware,
@@ -39,123 +50,73 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+# --- SCHEMAS FOR REQUESTS/RESPONSES ---
+class UserCreate(BaseModel):
+    username: str
+    password: str
 
-class Token(BaseModel):
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+class TokenResponse(BaseModel):
     access_token: str
     token_type: str
 
-class TokenData(BaseModel):
-    username: Optional[str] 
+# --- JWT HELPER FUNCTIONS ---
+def create_token(data: dict, expires_delta: Optional[timedelta] = None):
+    to_encode = data.copy()
+    expire = datetime.utcnow() + (expires_delta or timedelta(seconds=TOKEN_EXPIRES))
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
-def create_token(data:dict, expires_delta: Optional[timedelta] = None):
-    copy = data.copy()
-
-    if expires_delta:
-        expires = datetime.utcnow() + expires_delta
-    else:
-        expires = datetime.utcnow() + expires_delta(seconds=TOKEN_EXPIRES*360) 
-    copy.update({"exp":expires})
-
-    en_jwt = jwt.encode(copy, SECRET_KEY, algorithm = ALGORITHM)
-    return en_jwt
-
-def verify_token(token:str) -> TokenData:
+async def get_current_user(token: str = Depends(scheme)):
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms = [ALGORITHM])
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
-        if  username is None:
-            raise HTTPException(status_code=401)
-        return TokenData(username = username)
+        if username is None:
+            raise HTTPException(status_code=401, detail="Invalid token credentials")
     except JWTError:
-        raise HTTPException(status_code=401)
+        raise HTTPException(status_code=401, detail="Could not validate credentials")
     
-class User(Base):
-    __tablename__ = 'users'
-    id = Column(Integer, Sequence('user_id_sequence'), primary_key = True)
-    username = Column(String(50), nullable = False, unique=True)
-    password = Column(String(200), nullable = False)
-    is_active = Column(Boolean, default=True)
-
-    @classmethod
-    def check_input(cls, db, username, password):
-        if not username:
-            raise ValueError("The username cannot be empty.")
-        if not password:
-            raise ValueError("The password cannot be empty.")
-        if db.query(User).filter(User.username == username).first():
-            raise ValueError("Please try another username.")
-        if len(password) < 8:
-            raise ValueError("The password cannot be shorter than 8 characters.")    
-        if not any(character.isupper() for character in password):
-            raise ValueError("The password must contain an uppercase letter.")    
-        if not any(character.islower() for character in password):
-            raise ValueError("The password must contain a lowercase letter.")    
-        if not any(character.isdigit() for character in password):
-            raise ValueError("The password must contain a digit.")    
-        if not any(c in string.punctuation for c in password):
-            raise ValueError("The password must contain a special character.")    
-        
-    @classmethod
-    def add(cls, db, username, password):
-            db.add(User(username, password))
-            db.commit()
-
-    @classmethod
-    def check_password(cls, db, username, password):
-        user = db.query(User).filter(User.username == username).first()
-        if not user or not argon2.verify(password,user.password):
-            raise HTTPException(status_code=401, detail="Username or password incorrect")
-        
-        return user
-
-class UserPy(BaseModel):
-    username: str
-    password: str
-
-def get_user(token:str = Depends(scheme), db: Session = Depends(get_db)):
-    token_data = verify_token(token) 
-    user = db.query(User).filter(User.username == token_data.username).first()
+    user = await User.find_one(User.username == username)
     if user is None:
-            raise HTTPException(status_code=401)
+        raise HTTPException(status_code=401, detail="User not found")
     return user
 
-def get_active(curr_user: User = Depends(get_user)):
-    if not curr_user.is_active:
-            raise HTTPException(status_code=404)
-    return curr_user
-
+# --- API ENDPOINTS ---
 @app.post("/user")
-def add(user: UserPy, db: Session = Depends(get_db)):
-    try:
-        User.check_input(db, user.username, user.password)
-    except ValueError as error:
-        raise HTTPException(status_code = 400, detail = str(error))
+async def register_user(user_data: UserCreate):
+    # Check if user already exists using Beanie
+    existing_user = await User.find_one(User.username == user_data.username)
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Username already taken")
     
-    User.add(db, user.username, argon2.hash(user.password))
+    if len(user_data.username) < 3:
+        raise HTTPException(status_code=400, detail="Username must be at least 3 characters long")
+
+    if len(user_data.password) < 8:
+        raise HTTPException(status_code=400, detail="Password must be at least 8 characters long")
+
+    new_user = User(
+        username=user_data.username,
+        password=argon2.hash(user_data.password)
+    )
+    await new_user.insert()
+    
     return {"status": "user created"}
 
-class Login(BaseModel):
-    username: str
-    password: str
-
-@app.post("/token", response_model = Token)
-def verify(login: Login, db: Session = Depends(get_db)):
-    try:
-        user = User.check_password(db, login.username, login.password)
-    except ValueError as error:
-        raise HTTPException(status_code = 401, detail = str(error))
-    if not user.is_active:
-        raise HTTPException(status_code = 404)
+@app.post("/token", response_model=TokenResponse)
+async def login(login_data: LoginRequest):
+    # Find the user
+    user = await User.find_one(User.username == login_data.username)
     
-    token_expires = timedelta(hours = TOKEN_EXPIRES)
-    token = create_token(data = {"sub":user.username}, expires_delta = token_expires)
+    # Verify password
+    if not user or not argon2.verify(login_data.password, user.password):
+        raise HTTPException(status_code=401, detail="Username or password incorrect")
+    
+    # Generate token
+    token_expires = timedelta(seconds=TOKEN_EXPIRES)
+    token = create_token(data={"sub": user.username}, expires_delta=token_expires)
 
     return {"access_token": token, "token_type": "bearer"}
-
-Base.metadata.create_all(bind=engine)
