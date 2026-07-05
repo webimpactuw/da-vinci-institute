@@ -4,6 +4,7 @@ export const signUpUser = async (username, password) => {
     const res = await fetch(`${API_URL}/user`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: 'include',
         body: JSON.stringify({ username, password }),
     });
 
@@ -21,6 +22,7 @@ export const logInUser = async (username, password) => {
     const res = await fetch(`${API_URL}/token`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: 'include',
         body: JSON.stringify({ username, password }),
     });
 

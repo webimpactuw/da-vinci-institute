@@ -1,7 +1,9 @@
+'use client'
+
 import Link from "@/node_modules/next/link";
-import { redirect } from "@/node_modules/next/navigation";
-import { courseData } from "@/lib/courseData";
+import { getUsersCourseProgress } from "@/api/courseService";
 import { client } from "@/sanity/lib/client";
+import { useEffect, useState, use } from "react";
 
 function CourseCard({ category, course }) {
   return (
@@ -21,7 +23,7 @@ function CourseCard({ category, course }) {
         <p className="text-xs text-gray-500 leading-relaxed flex-1">{course.description}</p>
 
         {/* Progress bar */}
-        {course.progress !== undefined && (
+        {course.progress !== undefined && course.progress !== 0 && (
           <div className="mt-1">
             <div className="flex justify-between text-xs text-gray-400 mb-1">
               <span>{course.progress}%</span>
@@ -37,21 +39,52 @@ function CourseCard({ category, course }) {
           href={`/courses/${category}/${course.slug.current}`}
           className="mt-2 self-end text-xs font-bold rounded-full px-4 py-1.5 bg-[#4a7c59] text-white hover:bg-[#3d6b4a] transition-colors"
         >
-          {/* {course.status === "resume" ? "Resume" : "Begin"} */}
-          Begin
+          {course.progress === 0 ? "Begin" : "Resume"}
         </Link>
       </div>
     </div>
   );
 }
 
-export default async function CourseListPage({ params }) {
-  const { category } = await params;
+export default function CourseListPage({ params }) {
+  const { category } = use(params);
 
-  const query = `*[_type == "course" && subject->slug.current == $category]{ _id, title, description, slug, subject-> { subjectName, slug } }`;
-  const queryParams = { category: category };
-  const courseEntries = await client.fetch(query, queryParams);
-  console.log(courseEntries);
+  const [courseEntries, setCourseEntries] = useState([]);
+  const [courseProgressData, setCourseProgressData] = useState({});
+
+  useEffect(() => {
+    const fetchCourseProgress = async () => {
+      const query = `*[_type == "course" && subject->slug.current == $category]{ _id, title, description, slug, "totalSlides": count(slides), subject-> { subjectName, slug } }`;
+      const queryParams = { category: category };
+      const courseEntries = await client.fetch(query, queryParams);
+
+      setCourseEntries(courseEntries);
+
+      try {
+        const progressData = await getUsersCourseProgress();
+        setCourseProgressData(progressData);
+        console.log("Fetched course progress:", progressData);
+      } catch (error) {
+        console.error("Error fetching course progress:", error);
+      }
+    };
+
+    fetchCourseProgress();
+  }, []);
+
+
+  const mergedCourseEntries = courseEntries.map((course) => {
+    const progressEntry = courseProgressData[course._id];
+    const totalSlides = Math.max(course.totalSlides || 0, 1);
+    const completedSlides = progressEntry?.last_completed_slide ?? 0;
+    const progressPercent = Math.min(100, Math.max(0, Math.round((completedSlides / totalSlides) * 100)));
+
+    return {
+      ...course,
+      progress: progressPercent,
+      is_completed: progressEntry?.is_completed ?? false,
+    };
+  });
 
   return (
     <main className="min-h-screen bg-white px-6 py-10" style={{ fontFamily: "'Lato', sans-serif" }}>
@@ -79,15 +112,11 @@ export default async function CourseListPage({ params }) {
 
       {/* Course grid — 3 columns */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-6xl">
-        {courseEntries.map((course) => (
+        {mergedCourseEntries.map((course) => (
           <CourseCard key={course._id} category={category} course={course} />
         ))}
       </div>
 
     </main>
   );
-}
-
-export function generateStaticParams() {
-  return Object.keys(courseData).map((category) => ({ category }));
 }
