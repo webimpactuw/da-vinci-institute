@@ -107,7 +107,7 @@ export default function CourseListPage({ params }) {
         className="text-xl font-bold text-gray-800 mb-6"
         style={{ fontFamily: "'Cinzel', serif" }}
       >
-        {category} Courses
+        {category.charAt(0).toUpperCase() + category.slice(1)} Courses
       </h1>
 
       {/* Course grid — 3 columns */}
