@@ -17,9 +17,7 @@ export default function Page() {
     if (!checkPassword()) return;
 
     try {
-      const data = await signUpUser(username, password);
-
-      localStorage.setItem("token", data.access_token);
+      await signUpUser(username, password);
       router.push("/courses");
 
       setErrors([]);
@@ -53,9 +51,7 @@ export default function Page() {
     e.preventDefault();
 
     try {
-      const data = await logInUser(username, password);
-
-      localStorage.setItem("token", data.access_token);
+      await logInUser(username, password);
       router.push("/courses");
 
       setErrors([]);

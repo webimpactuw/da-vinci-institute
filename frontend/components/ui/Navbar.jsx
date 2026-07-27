@@ -6,6 +6,7 @@
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 const navItems = [
   { id: "about",    label: "About Da Vinci Institute", href: "/about" },
@@ -18,6 +19,7 @@ const navItems = [
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const dropdownRef = useRef(null);
 
   useEffect(() => {
@@ -26,6 +28,17 @@ export default function Navbar() {
         setIsOpen(false);
       }
     }
+
+    // Ask server if we're authenticated by calling /me (server reads HttpOnly cookie)
+    (async () => {
+      try {
+        const res = await fetch(`${API_URL}/user/me`, { credentials: 'include' });
+        setIsAuthenticated(res.ok);
+      } catch (err) {
+        setIsAuthenticated(false);
+      }
+    })();
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
@@ -93,20 +106,31 @@ export default function Navbar() {
         />
       </Link>
 
-      {/* RIGHT — Log In + Sign Up */}
+      {/* RIGHT — Auth actions */}
       <div className="flex items-center gap-10 ml-auto">
-        <Link
-          href="/accountForm?isLogin=true"
-          className="text-white text-sm tracking-wide hover:opacity-80 transition-opacity"
-        >
-          Log In
-        </Link>
-        <Link
-          href="/accountForm?isLogin=false"
-          className="bg-white text-[#003d55] text-sm font-bold rounded-full px-5 py-2 hover:bg-gray-100 transition-colors"
-        >
-          Sign Up
-        </Link>
+        {isAuthenticated ? (
+          <Link
+            href="/courses"
+            className="bg-white text-[#003d55] text-sm font-bold rounded-full px-5 py-2 hover:bg-gray-100 transition-colors"
+          >
+            Courses
+          </Link>
+        ) : (
+          <>
+            <Link
+              href="/accountForm?isLogin=true"
+              className="text-white text-sm tracking-wide hover:opacity-80 transition-opacity"
+            >
+              Log In
+            </Link>
+            <Link
+              href="/accountForm?isLogin=false"
+              className="bg-white text-[#003d55] text-sm font-bold rounded-full px-5 py-2 hover:bg-gray-100 transition-colors"
+            >
+              Sign Up
+            </Link>
+          </>
+        )}
       </div>
     </nav>
   );
